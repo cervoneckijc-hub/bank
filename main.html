@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Шкебеде Банк - Головна</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f9; /* Light background for contrast */
+            padding-bottom: 70px; /* Space for fixed bottom navigation */
+            overflow-x: hidden; /* Prevent body horizontal scroll */
+        }
+        .skibidi-card {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Тінь */
+            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            
+            /* Прямокутна форма: приблизно 16:10 */
+            width: 90%; 
+            max-width: 350px;
+            height: 180px; 
+            position: relative; /* Для позиціонування кнопки ока */
+        }
+
+        /* Стиль для контейнера, щоб картка була по центру */
+        .card-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            position: relative; /* Для позиціонування стрілок */
+        }
+
+        /* Стилі для стрілок навігації (хоча вони видалені, класи залишаємо для чистоти) */
+        .card-nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 8px;
+            background-color: rgba(255, 255, 255, 0.6); /* Напівпрозорий фон */
+            color: #374151;
+            border-radius: 9999px; /* Кругла форма */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            z-index: 10;
+        }
+
+        .card-nav-arrow:hover {
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        .action-button {
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .action-button:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        .notification {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+        /* Icon styles (using SVG for simplicity) */
+        .icon {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        /* Modal Backdrop styles */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.6);
+            transition: opacity 0.3s ease;
+        }
+        /* Modal Content animation helper */
+        .modal-content-transition {
+            transition: transform 0.3s ease-out;
+        }
+
+        /* Dark Mode styles (mock implementation) */
+        .dark {
+            background-color: #1f2937;
+            color: #f4f7f9;
+        }
+        .dark .text-gray-900 { color: #f4f7f9; }
+        .dark .text-gray-800 { color: #e5e7eb; }
+        .dark .text-gray-700 { color: #d1d5db; }
+        .dark .bg-white { background-color: #374151; }
+        .dark .bg-white .shadow { box-shadow: none; }
+        .dark .bg-white .action-button { background-color: #4b5563; }
+        .dark .bg-white .text-gray-600 { color: #d1d5db; }
+        .dark .bg-white .text-gray-500 { color: #9ca3af; }
+    
+        /* Custom colors for cards */
+        .bg-card-blue { background: linear-gradient(135deg, #1f2937, #3b82f6); }
+        .bg-card-green { background: linear-gradient(135deg, #059669, #10b981); }
+        .bg-card-red { background: linear-gradient(135deg, #ef4444, #f97316); }
+        .bg-card-purple { background: linear-gradient(135deg, #8b5cf6, #c084fc); }
+        
+        /* Chat specific styles */
+        .chat-container {
+            height: 50vh;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+        .message-bubble {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+        .user-message {
+            background-color: #3b82f6; 
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .manager-message {
+            background-color: #e5e7eb; 
+            color: #374151;
+            border-bottom-left-radius: 4px;
+        }
+        .dark .manager-message {
+             background-color: #4b5563;
+             color: #d1d5db;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Main Container -->
+    <div id="app" class="max-w-xl mx-auto p-4 sm:p-6">
+        
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-extrabold text-gray-900">Шкебеде Банк</h1>
+            <!-- Profile Button (Dynamic) -->
+            <button id="profile-button" onclick="handleProfileClick()" class="p-2 text-gray-600 hover:text-blue-600 transition action-button rounded-full bg-white shadow-md">
+                <!-- Icon will be set by JS: User icon (logged in) or Lock icon (logged out) -->
+            </button>
+        </header>
+
+        <!-- Dynamic Card Placeholder (Centered, Rectangular size) -->
+        <div id="card-placeholder" class="mb-8 card-wrapper"> 
+            
+            <!-- Card Content -->
+            <div id="active-card" class="skibidi-card text-white p-5 rounded-xl cursor-grab active:cursor-grabbing">
+                <!-- Card content dynamically injected here -->
+            </div>
+            
+        </div>
+
+        <!-- Quick Actions -->
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Швидкі дії</h2>
+        <div class="grid grid-cols-3 gap-4 mb-8">
+            <!-- 1. Переказ -->
+            <button onclick="openModal('transfer')" class="action-button bg-white p-4 rounded-xl shadow hover:shadow-lg flex flex-col items-center">
+                <div class="p-3 bg-blue-100 text-blue-600 rounded-full mb-2"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg></div>
+                <span class="text-sm font-semibold text-gray-700">Переказ</span>
+            </button>
+            <!-- 2. Оплата -->
+            <button onclick="openModal('payment')" class="action-button bg-white p-4 rounded-xl shadow hover:shadow-lg flex flex-col items-center">
+                <div class="p-3 bg-green-100 text-green-600 rounded-full mb-2"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div>
+                <span class="text-sm font-semibold text-gray-700">Оплата</span>
+            </button>
+            <!-- 3. Поповнення -->
+            <button onclick="openModal('replenish')" class="action-button bg-white p-4 rounded-xl shadow hover:shadow-lg flex flex-col items-center">
+                <div class="p-3 bg-red-100 text-red-600 rounded-full mb-2"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></div>
+                <span class="text-sm font-semibold text-gray-700">Поповнити</span>
+            </button>
+            <!-- 4. Більше (Інфо) -->
+            <button onclick="openModal('otherinfo')" class="action-button bg-white p-4 rounded-xl shadow hover:shadow-lg flex flex-col items-center">
+                <div class="p-3 bg-purple-100 text-purple-600 rounded-full mb-2"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg></div>
+                <span class="text-sm font-semibold text-gray-700">Інфо</span>
+            </button>
+            <!-- 5. Кредит -->
+            <button onclick="openCreditModal()" class="action-button bg-white p-4 rounded-xl shadow hover:shadow-lg flex flex-col items-center">
+                <div class="p-3 bg-indigo-100 text-indigo-600 rounded-full mb-2"><svg class="icon" viewBox="0 0 24 24"><path d="M10 20H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h10l6 6v8a2 2 0 0 1-2 2z"></path><path d="M15 15a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2z"></path></svg></div>
+                <span class="text-sm font-semibold text-gray-700">Кредит</span>
+            </button>
+            <!-- 6. Депозит -->
+            <button onclick="openModal('deposit')" class="action-button bg-white p-4 rounded-xl shadow hover:shadow-lg flex flex-col items-center">
+                <div class="p-3 bg-yellow-100 text-yellow-600 rounded-full mb-2"><svg class="icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
+                <span class="text-sm font-semibold text-gray-700">Депозит</span>
+            </button>
+        </div>
+
+        <!-- Transaction History (Limited preview) -->
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Останні транзакції</h2>
+        <div id="transactions-list" class="space-y-3 bg-white p-4 rounded-xl shadow">
+            <!-- Transactions will be rendered here -->
+        </div>
+        
+    </div>
+
+    <!-- ---------------------------------------------------------------------- -->
+    <!-- MOCK MODALS CONTAINER -->
+    <!-- ---------------------------------------------------------------------- -->
+
+    <div id="modal-container" class="fixed inset-0 flex items-end justify-center z-50 opacity-0 pointer-events-none transition-opacity duration-300 modal-backdrop">
+        
+        <!-- 1.3. DEPOSIT MODAL -->
+        <div id="deposit-modal" class="bg-white w-full max-w-xl p-6 rounded-t-3xl shadow-2xl transform translate-y-full modal-content-transition hidden" role="dialog" aria-modal="true" data-modal="deposit">
+            <h3 class="text-2xl font-bold mb-6 text-gray-800">Відкриття Депозиту</h3>
+            
+            <p class="text-sm text-gray-600 mb-4">Оберіть картку для списання коштів: <span class="font-semibold text-blue-600">${cards[activeCardIndex]?.name || 'Н/Д'}</span></p>
+
+            <form onsubmit="handleDepositSubmit(event)">
+                <div class="mb-4">
+                    <label for="deposit-amount" class="block text-sm font-medium text-gray-700 mb-1">Сума Депозиту (мін. 1000 грн)</label>
+                    <input type="number" step="100" min="1000" id="deposit-amount" name="amount" required placeholder="Наприклад, 10000" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500" oninput="calculateDeposit()">
+                </div>
+                <div class="mb-4">
+                    <label for="deposit-term" class="block text-sm font-medium text-gray-700 mb-1">Термін (місяців)</label>
+                    <select id="deposit-term" name="term" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 bg-white" onchange="calculateDeposit()">
+                        <option value="6">6 місяців (10% річних)</option>
+                        <option value="12">12 місяців (11% річних)</option>
+                        <option value="24">24 місяці (12% річних)</option>
+                    </select>
+                </div>
+                
+                <!-- Calculation Result -->
+                <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 mb-6">
+                    <p class="font-semibold text-gray-800 mb-2">Прогноз доходу (Мок):</p>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Очікуваний Дохід:</span>
+                        <span id="deposit-interest" class="font-bold text-green-600">0.00 грн</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold border-t border-yellow-200 mt-2 pt-2">
+                        <span class="text-gray-800">Загальна Сума:</span>
+                        <span id="deposit-total" class="text-gray-900">0.00 грн</span>
+                    </div>
+                </div>
+
+                <p id="deposit-error" class="text-red-500 text-sm mb-3 hidden">Недостатньо коштів на рахунку для депозиту.</p>
+                
+                <div class="flex space-x-3">
+                    <button type="button" onclick="closeModal()" class="w-1/3 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition">Скасувати</button>
+                    <button type="submit" class="w-2/3 py-3 bg-yellow-600 text-white font-semibold rounded-xl hover:bg-yellow-700 transition">Відкрити Депозит</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 1.4. OTHER INFO MODAL -->
+        <div id="otherinfo-modal" class="bg-white w-full max-w-xl p-6 rounded-t-3xl shadow-2xl transform translate-y-full modal-content-transition hidden" role="dialog" aria-modal="true" data-modal="otherinfo">
+            <h3 class="text-2xl font-bold mb-6 text-gray-800">Про Шкебеде Банк та Додаток</h3>
+            
+            <div class="space-y-4 text-gray-700">
+                <p class="text-lg font-semibold border-b pb-2 text-gray-800">Шкебеде Банк — Ваш надійний партнер у світі фінансів.</p>
+                <p>Ця програма є інтерактивним макетом, створеним для демонстрації сучасного мобільного банкінгу. Усі фінансові операції, включаючи баланси, транзакції та нарахування відсотків, є моковими та імітують роботу реального додатку.</p>
+                
+                <div class="p-3 bg-gray-100 rounded-lg">
+                    <p class="font-bold">Ключові функції макету:</p>
+                    <ul class="list-disc list-inside text-sm mt-1 space-y-1">
+                        <li>**Кредитна логіка:** Динамічні відсотки 1% на хвилину.</li>
+                        <li>**Депозити:** Моковий розрахунок доходу.</li>
+                        <li>**UX:** Горизонтальний свайп карток без зміщення екрана.</li>
+                        <li>**Аутентифікація:** Вхід/реєстрація профілю.</li>
+                    </ul>
+                </div>
+
+                <p class="text-sm italic pt-2">Версія макету: 1.2.3. Дякуємо, що обрали Шкебеде Банк!</p>
+            </div>
+
+            <button onclick="closeModal()" class="w-full mt-8 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition">Закрити</button>
+        </div>
+        
+        <!-- 1.1. CHAT MODAL (unchanged) -->
+        <div id="chat-modal" class="bg-white w-full max-w-xl p-6 rounded-t-3xl shadow-2xl transform translate-y-full modal-content-transition hidden flex flex-col h-5/6" role="dialog" aria-modal="true" data-modal="chat">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 flex-shrink-0">Чат підтримки 💬</h3>
+            <div class="text-center text-sm text-gray-500 mb-4 flex-shrink-0">
+                Онлайн-менеджер: <span class="text-green-500 font-semibold">Олександр</span>
+            </div>
+
+            <!-- Chat History Area -->
+            <div id="chat-history" class="chat-container space-y-4 mb-4 flex-grow overflow-y-auto p-2">
+                 <div class="flex justify-start">
+                    <div class="message-bubble manager-message">Вітаємо! Я ваш віртуальний менеджер. Чим можу допомогти сьогодні?</div>
+                </div>
+            </div>
+
+            <!-- Input Form -->
+            <form id="chat-form" onsubmit="handleChatSubmit(event)" class="flex gap-2 flex-shrink-0 pt-4 border-t border-gray-100">
+                <input type="text" id="chat-input" placeholder="Напишіть ваше питання..." required class="flex-grow p-3 border border-gray-300 rounded-xl focus:ring-blue-500 focus:border-blue-500 text-gray-800 bg-gray-50">
+                <button type="submit" class="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition action-button">
+                    <svg class="icon w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </form>
+
+            <button onclick="closeModal()" class="w-full mt-4 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition flex-shrink-0">
+                Закрити
+            </button>
+        </div>
+        
+        <!-- 1.2. FULL HISTORY MODAL (unchanged) -->
+        <div id="history-modal" class="bg-white w-full max-w-xl p-6 rounded-t-3xl shadow-2xl transform translate-y-full modal-content-transition hidden flex flex-col h-5/6" role="dialog" aria-modal="true" data-modal="history">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 flex-shrink-0">Повна Історія Транзакцій</h3>
+            
+            <div id="full-transactions-list" class="flex-grow overflow-y-auto space-y-3 p-2 border border-gray-100 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
+                <!-- All transactions will be rendered here -->
+            </div>
+
+            <button onclick="closeModal()" class="w-full mt-4 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition flex-shrink-0">
+                Закрити
+            </button>
+        </div>
+
+
+        <!-- 0.9. AUTH MODAL (Login/Signup switch) (retained) -->
+        <div id="auth-modal" class="bg-white w-full max-w-xl p-6 rounded-t-3xl shadow-2xl transform translate-y-full modal-content-transition hidden" role="dialog" aria-modal="true" data-modal="auth">
+            <h3 class="text-2xl font-bold mb-6 text-gray-800" id="auth-title">Вхід в акаунт</h3>
+            
+            <!-- Login Form -->
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="mb-4">
+                    <label for="login-nick" class="block text-sm font-medium text-gray-700 mb-1">Нікнейм</label>
+                    <input type="text" id="login-nick" name="nick" required placeholder="Ваш нікнейм" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="mb-6">
+                    <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">Пароль</label>
+                    <input type="password" id="login-password" name="password" required placeholder="Ваш пароль" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <p id="login-error" class="text-red-500 text-sm mb-3 hidden">Невірний нікнейм або пароль.</p>
+                <button type="submit" class="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition mb-4">Увійти</button>
+            </form>
+            
+            <!-- Signup Form (Initially Hidden) -->
+            <form id="signup-form" onsubmit="handleSignup(event)" class="hidden">
+                 <div class="mb-4">
+                    <label for="signup-nick" class="block text-sm font-medium text-gray-700 mb-1">Створити Нікнейм</label>
+                    <input type="text" id="signup-nick" name="nick" required placeholder="Створіть унікальний нік" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                </div>
+                <div class="mb-6">
+                    <label for="signup-password" class="block text-sm font-medium text-gray-700 mb-1">Створити Пароль</label>
+                    <input type="password" id="signup-password" name="password" required placeholder="Мінімум 6 символів" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                </div>
+                <p id="signup-error" class="text-red-500 text-sm mb-3 hidden">Користувач з цим нікнеймом вже існує.</p>
+                <button type="submit" class="w-full py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition mb-4">Зареєструватися</button>
+            </form>
+            
+            <!-- Switch Button -->
+            <button id="auth-switch-btn" onclick="toggleAuthMode()" class="w-full text-blue-600 text-sm hover:underline">
+                Не маєте акаунту? **Зареєструватися**
+            </button>
+            <button onclick="closeModal()" class="w-full mt-4 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition">Закрити</button>
+        </div>
+        
+        <!-- 1.0. PROFILE SETTINGS MODAL (retained) -->
+        <div id="settings-modal" class="bg-white w-full max-w-xl p-6 rounded-t-3xl shadow-2xl transform translate-y-full modal-content-transition hidden" role="dialog" aria-modal="true" data-modal="settings">
+            <h3 class="text-2xl font-bold mb-6 text-gray-800">Налаштування профілю</h3>
+            
+            <p class="mb-6 text-lg font-semibold text-gray-700">Ви увійшли як: <span id="current-user-nick" class="text-blue-600"></span></p>
+
+            <form onsubmit="handleSettingsChange(event)" class="space-y-4">
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <label for="settings-nick" class="block text-sm font-medium text-gray-700 mb-1">Змінити Нікнейм</label>
+                    <input type="text" id="settings-nick" name="nick" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    <button type="submit" class="w-full mt-3 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition text-sm">Зберегти Нікнейм</button>
+                </div>
+            </form>
+
+            <div class="space-y-4 mt-6">
+                <!-- Тема (Моковий перемикач) -->
+                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                    <span class="font-medium text-gray-700">Темна тема</span>
+                    <button onclick="toggleTheme()" id="theme-toggle" class="px-4 py-2 bg-gray-300 text-gray-800 font-semibold rounded-full hover:bg-gray-400 transition">Увімкнути</button>
+                </div>
+
+                 <!-- Мова (Моковий перемикач) -->
+                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                    <span class="font-medium text-gray-700">Мова (UA/EN)</span>
+                    <button onclick="handleNotification('Зміна мови (Mock) на EN')" class="px-4 py-2 bg-gray-300 text-gray-800 font-semibold rounded-full hover:bg-gray-400 transition">Змінити</button>
+                </div>
+            </div>
+
+            <button onclick="handleLogout()" class="w-full mt-8 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition">
+                Вийти з акаунту
+            </button>
+            <button onclick="closeModal()" class="w-full mt-4 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition">Закрити</button>
+        </div>
+
+
+        <!-- 0. TRANSACTION DETAIL MODAL (retained) -->
+        <div id="detail-modal" class="bg-white w-full max-w-xl p-6 rounded-t-3xl shadow-2xl transform translate-y-full modal-content-transition hidden" role="dialog" aria-modal="true" data-modal="detail">
+            <h3 class="text-2xl font-bold mb-6 text-gray-800">Деталі транзакції</h3>
+            <div class="space-y-4">
+                <div class="flex justify-between">
+                    <span class="text-gray-500 font-medium">Опис:</span>
+                    <span id="detail-name" class="font-semibold text-gray-800"></span>
+                </div>
+                <div class="flex justify-between border-t border-gray-100 pt-3">
+                    <span class="text-gray-500 font-medium">Сума:</span>
+                    <span id="detail-amount" class="font-bold text-lg"></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500 font-medium">Дата:</span>
+                    <span id="detail-date" class="text-gray-700"></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500 font-medium">Моковий ID:</span>
+                    <span id="detail-id" class="text-gray-700 text-sm"></span>
+                </div>
+            </div>
+            <button onclick="closeModal()" class="w-full mt-8 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition">Закрити</button>
+        </div>
+        
+        <!-- 0.5. CARD SETTINGS MODAL (retained) -->
+        <div id="cardsettings-modal" class="bg-white w-full max-w-xl p-6 rounded-t-3xl shadow-2xl transform translate-y-full modal-content-transition hidden" role="dialog" aria-modal="true" data-modal="cardsettings">
+            <h3 class="text-2xl font-bold mb-6 text-gray-800" id="settings-card-name">Налаштування картки</h3>
+            
+            <div id="card-delete-info" class="mb-4 hidden p-3 bg-red-50 rounded-lg text-red-700 text-sm font-medium">
+                Не можна видалити: погасіть борг на <span id="card-delete-debt"></span> грн.
+            </div>
+
+            <form onsubmit="handleCardSettingsSubmit(event)">
+                <input type="hidden" id="settings-card-id" name="id">
+                <div class="mb-4">
+                    <label for="settings-name" class="block text-sm font-medium text-gray-700 mb-1">Назва картки</label>
+                    <input type="text" id="settings-name" name="name" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Колір картки</label>
+                    <div class="flex space-x-3" id="color-options">
+                        <button type="button" class="w-10 h-10 rounded-full bg-card-blue border-4 border-transparent hover:border-gray-400 focus:border-white transition" data-color="bg-card-blue" onclick="selectCardColor(this)"></button>
+                        <button type="button" class="w-10 h-10 rounded-full bg-card-green border-4 border-transparent hover:border-gray-400 focus:border-white transition" data-color="bg-card-green" onclick="selectCardColor(this)"></button>
+                        <button type="button" class="w-10 h-10 rounded-full bg-card-red border-4 border-transparent hover:border-gray-400 focus:border-white transition" data-color="bg-card-red" onclick="selectCardColor(this)"></button>
+                        <button type="button" class="w-10 h-10 rounded-full bg-card-purple border-4 border-transparent hover:border-gray-400 focus:border-white transition" data-color="bg-card-purple" onclick="selectCardColor(this)"></button>
+                        <input type="hidden" id="settings-color" name="color" required>
+                    </div>
+                </div>
+                <div class="flex space-x-3">
+                    <button type="button" onclick="closeModal()" class="w-1/3 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition">Скасувати</button>
+                    <button type="submit" class="w-2/3 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition">Зберегти</button>
+                </div>
+            </form>
+            
+            <button id="delete-card-button" onclick="handleCardDelete()" class="w-full mt-6 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition disabled:bg-red-300" disabled>
+                Видалити Картку
+            </button>
+        </div>
+
+        <!-- 0.7. CARDS OVERVIEW MODAL (retained) -->
+        <div id="cards-modal" class="bg-white w-full max-w-xl p-6 rounded-t-3xl shadow-2xl transform translate-y-full modal-content-transition hidden" role="dialog" aria-modal="true" data-modal="cards">
+            <h3 class="text-2xl font-bold mb-6 text-gray-800">Мої Картки</h3>
+            <div id="all-cards-list" class="space-y-4 mb-6">
+                <!-- All cards list generated here -->
+            </div>
+            <button onclick="openModal('newcard')" class="w-full py-3 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition action-button">
+                + Відкрити нову карту
+            </button>
+            <button onclick="closeModal()" class="w-full mt-4 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition">
+                Закрити
+            </button>
+        </div>
+
+        <!-- 0.8. NEW CARD MODAL (retained) -->
+        <div id="newcard-modal" class="bg-white w-full max-w-xl p-6 rounded-t-3xl shadow-2xl transform translate-y-full modal-content-transition hidden" role="dialog" aria-modal="true" data-modal="newcard">
+            <h3 class="text-2xl font-bold mb-6 text-gray-800">Відкрити нову карту</h3>
+            <form onsubmit="handleNewCardSubmit(event)">
+                <div class="mb-4">
+                    <label for="newcard-name" class="block text-sm font-medium text-gray-700 mb-1">Назва нової картки</label>
+                    <input type="text" id="newcard-name" name="name" required placeholder="Наприклад, Для подорожей" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                </div>
+                <div class="mb-6">
+                     <label class="block text-sm font-medium text-gray-700 mb-2">Оберіть колір</label>
+                    <div class="flex space-x-3" id="newcard-color-options">
+                        <button type="button" class="w-10 h-10 rounded-full bg-card-blue border-4 border-transparent hover:border-gray-400 focus:border-white transition" data-color="bg-card-blue" onclick="selectNewCardColor(this)"></button>
+                        <button type="button" class="w-10 h-10 rounded-full bg-card-green border-4 border-transparent hover:border-gray-400 focus:border-white transition" data-color="bg-card-green" onclick="selectNewCardColor(this)"></button>
+                        <button type="button" class="w-10 h-10 rounded-full bg-card-red border-4 border-transparent hover:border-gray-400 focus:border-white transition" data-color="bg-card-red" onclick="selectNewCardColor(this)"></button>
+                        <button type="button" class="w-10 h-10 rounded-full bg-card-purple border-4 border-transparent hover:border-gray-400 focus:border-white transition" data-color="bg-card-purple" onclick="selectNewCardColor(this)"></button>
+                        <input type="hidden" id="newcard-color" name="color" value="bg-card-blue" required>
+                    </div>
+                </div>
+                <div class="flex space-x-3">
+                    <button type="button" onclick="openModal('cards')" class="w-1/3 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition">Назад</button>
+                    <button type="submit" class="w-2/3 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition">Створити</button>
+                </div>
+            </form>
+        </div>
+
+
+        <!-- Other Modals (Transfer, Payment, Replenish, Credit) (retained) -->
+        <div id="transfer-modal" class="bg-white w-full max-w-xl p-6 rounded-t-3xl shadow-2xl transform translate-y-full modal-content-transition hidden" role="dialog" aria-modal="true" data-modal="transfer">
+            <h3 class="text-2xl font-bold mb-6 text-gray-800">Переказ коштів</h3>
+            <form id="transfer-form" onsubmit="handleTransferSubmit(event)">
+                <div class="mb-4">
+                    <label for="transfer-amount" class="block text-sm font-medium text-gray-700 mb-1">Сума переказу (грн)</label>
+                    <input type="number" step="0.01" min="1" id="transfer-amount" name="amount" required placeholder="Наприклад, 500.00" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="mb-6">
+                    <label for="transfer-recipient" class="block text-sm font-medium text-gray-700 mb-1">Отримувач (назва)</label>
+                    <input type="text" id="transfer-recipient" name="recipient" required placeholder="Наприклад, Другу Петру" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <p id="transfer-error" class="text-red-500 text-sm mb-3 hidden">Недостатньо коштів на рахунку.</p>
+                <div class="flex space-x-3">
+                    <button type="button" onclick="closeModal()" class="w-1/3 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition">Скасувати</button>
+                    <button type="submit" class="w-2/3 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition">Надіслати Переказ</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="payment-modal" class="bg-white w-full max-w-xl p-6 rounded-t-3xl shadow-2xl transform translate-y-full modal-content-transition hidden" role="dialog" aria-modal="true" data-modal="payment">
+            <h3 class="text-2xl font-bold mb-6 text-gray-800">Оплата послуг</h3>
+            <form id="payment-form" onsubmit="handlePaymentSubmit(event)">
+                <div class="mb-4">
+                    <label for="payment-service" class="block text-sm font-medium text-gray-700 mb-1">Оберіть послугу</label>
+                    <select id="payment-service" name="service" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 bg-white">
+                        <option value="">-- Оберіть --</option>
+                        <option value="Інтернет (Провайдер)">Інтернет (Провайдер)</option>
+                        <option value="Мобільний зв'язок">Мобільний зв'язок</option>
+                        <option value="Комунальні послуги">Комунальні послуги</option>
+                        <option value="Благодійність (ЗСУ)">Благодійність (ЗСУ)</option>
+                    </select>
+                </div>
+                <div class="mb-6">
+                    <label for="payment-amount" class="block text-sm font-medium text-gray-700 mb-1">Сума оплати (грн)</label>
+                    <input type="number" step="0.01" min="1" id="payment-amount" name="amount" required placeholder="Наприклад, 250.00" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                </div>
+                <p id="payment-error" class="text-red-500 text-sm mb-3 hidden">Недостатньо коштів на рахунку.</p>
+                <div class="flex space-x-3">
+                    <button type="button" onclick="closeModal()" class="w-1/3 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition">Скасувати</button>
+                    <button type="submit" class="w-2/3 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition">Оплатити</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="replenish-modal" class="bg-white w-full max-w-xl p-6 rounded-t-3xl shadow-2xl transform translate-y-full modal-content-transition hidden" role="dialog" aria-modal="true" data-modal="replenish">
+            <h3 class="text-2xl font-bold mb-6 text-gray-800">Поповнення рахунку</h3>
+            <form id="replenish-form" onsubmit="handleReplenishSubmit(event)">
+                <div class="mb-4">
+                    <label for="replenish-source" class="block text-sm font-medium text-gray-700 mb-1">Джерело поповнення</label>
+                    <select id="replenish-source" name="source" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500 bg-white">
+                        <option value="З іншої картки">З іншої картки</option>
+                        <option value="Готівка (термінал)">Готівка (термінал)</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="replenish-sender" class="block text-sm font-medium text-gray-700 mb-1">Від кого (Опис)</label>
+                    <input type="text" id="replenish-sender" name="sender" required placeholder="Наприклад, Зарплата" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500">
+                </div>
+                <div class="mb-6">
+                    <label for="replenish-amount" class="block text-sm font-medium text-gray-700 mb-1">Сума поповнення (грн)</label>
+                    <input type="number" step="0.01" min="1" id="replenish-amount" name="amount" required placeholder="Наприклад, 1000.00" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-red-500 focus:border-red-500">
+                </div>
+                <div class="flex space-x-3">
+                    <button type="button" onclick="closeModal()" class="w-1/3 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition">Скасувати</button>
+                    <button type="submit" class="w-2/3 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition">Поповнити</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Credit Modal (Dynamic content) -->
+        <div id="credit-modal" class="bg-white w-full max-w-xl p-6 rounded-t-3xl shadow-2xl transform translate-y-full modal-content-transition hidden" role="dialog" aria-modal="true" data-modal="credit">
+            <h3 class="text-2xl font-bold mb-6 text-gray-800">Кредитні продукти</h3>
+
+            <!-- Dynamic Credit Info -->
+            <div id="credit-info" class="mb-6 space-y-2 p-4 rounded-lg bg-indigo-50 border border-indigo-200">
+                <!-- Content injected here by updateCreditModalInfo() -->
+            </div>
+            
+            <h4 class="text-xl font-semibold text-gray-800 mb-4">Подати Заявку</h4>
+            <form id="credit-form" onsubmit="handleCreditSubmit(event)">
+                <div class="mb-4">
+                    <label for="credit-amount" class="block text-sm font-medium text-gray-700 mb-1">Бажана сума кредиту (грн)</label>
+                    <input type="number" step="1000" min="5000" max="50000" id="credit-amount" name="amount" required placeholder="Наприклад, 15000" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div class="mb-6">
+                    <label for="credit-term" class="block text-sm font-medium text-gray-700 mb-1">Термін (місяців)</label>
+                    <select id="credit-term" name="term" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                        <option value="6">6 місяців</option>
+                        <option value="12">12 місяців</option>
+                        <option value="24">24 місяці</option>
+                    </select>
+                </div>
+                <div class="flex space-x-3">
+                    <button type="button" onclick="closeModal()" class="w-1/3 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition">Скасувати</button>
+                    <button type="submit" id="submit-credit-btn" class="w-2/3 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition">Подати заявку</button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+
+    <!-- Mock Notification Panel -->
+    <div id="mock-notification" class="notification fixed bottom-20 left-1/2 transform -translate-x-1/2 p-3 bg-gray-800 text-white text-center rounded-lg shadow-2xl opacity-0 pointer-events-none z-50">
+        <!-- Notification text here -->
+    </div>
+
+    <!-- Fixed Bottom Navigation (Mobile Friendly) -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-xl z-40">
+        <div class="flex justify-around items-center h-16 max-w-xl mx-auto">
+            <!-- Головна -->
+            <button onclick="handleNotification('Перейти на головну')" class="flex flex-col items-center text-blue-600">
+                <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <span class="text-xs mt-1">Головна</span>
+            </button>
+            
+            <!-- Картки (Opens Card Overview Modal) -->
+            <button onclick="openCardsPage()" class="flex flex-col items-center text-gray-500 hover:text-blue-600 transition">
+                <svg class="icon" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                <span class="text-xs mt-1">Картки</span>
+            </button>
+            
+            <!-- Історія -->
+            <button onclick="openHistoryPage()" class="flex flex-col items-center text-gray-500 hover:text-blue-600 transition">
+                <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><polyline points="13 2 13 9 20 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline><line x1="8" y1="13" x2="16" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></line><line x1="8" y1="17" x2="16" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></line></svg>
+                <span class="text-xs mt-1">Історія</span>
+            </button>
+            
+            <!-- Підтримка (Chat) -->
+            <button onclick="openChatPage()" class="flex flex-col items-center text-gray-500 hover:text-blue-600 transition">
+                <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                <span class="text-xs mt-1">Чат</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        // --- AUTH STATE & DATA ---
+        let cards = [
+            // UPDATED: Нові початкові баланси
+            { id: 1, name: 'Основна', balance: 5436.00, number: '1234', color: 'bg-card-blue', icon: '💳' },
+            { id: 2, name: 'Для покупок', balance: 1542.00, number: '5678', color: 'bg-card-green', icon: '🛒' },
+            { id: 3, name: 'Кредитна', balance: 0.00, number: '9012', color: 'bg-card-red', icon: '💰', 
+              creditLimit: 50000.00, debt: 0.00, initialLoan: 0.00 
+            },
+        ];
+        
+        let activeCardIndex = 0; 
+        let isBalanceVisible = true;
+        let transactionIdCounter = 9;
+        let newCardIdCounter = 4;
+        let interestIntervalId = null;
+        let notificationTimeout = null; // Для керування сповіщеннями
+
+        // Mock Auth/Profile State
+        let currentUser = null; 
+        let mockUsers = JSON.parse(localStorage.getItem('skibidiUsers')) || [];
+        let isDarkTheme = localStorage.getItem('skibidiTheme') === 'dark';
+
+        // Мокові дані транзакцій
+        const transactions = [
+            { id: 1, name: 'Сільпо', amount: -450.50, date: 'Сьогодні', icon: '🛒', transactionId: 'TX12345678', cardName: 'Основна' },
+            { id: 2, name: 'Переказ від Олени К.', amount: 1500.00, date: 'Сьогодні', icon: '💰', transactionId: 'TX12345679', cardName: 'Основна' },
+            { id: 3, name: 'Netflix (Підписка)', amount: -399.00, date: 'Вчора', icon: '🎬', transactionId: 'TX12345680', cardName: 'Для покупок' },
+            { id: 4, name: 'Uklon (Таксі)', amount: -125.80, date: '11 Жовтня', icon: '🚕', transactionId: 'TX12345681', cardName: 'Основна' },
+            { id: 5, name: 'Повернення коштів', amount: 800.00, date: '10 Жовтня', icon: '↩️', transactionId: 'TX12345682', cardName: 'Для покупок' },
+            { id: 6, name: 'Comfy (Техніка)', amount: -5899.00, date: '09 Жовтня', icon: '🖥️', transactionId: 'TX12345683', cardName: 'Основна' },
+            { id: 7, name: 'Kyivstar (Поповнення)', amount: -150.00, date: '08 Жовтня', icon: '📱', transactionId: 'TX12345684', cardName: 'Основна' },
+            { id: 8, name: 'Поповнення від Зарплати', amount: 35000.00, date: '05 Жовтня', icon: '💵', transactionId: 'TX12345685', cardName: 'Основна' },
+        ];
+        
+        // Mock Chat History
+        let chatHistory = [
+            { sender: 'manager', text: 'Вітаємо! Я ваш віртуальний менеджер. Чим можу допомогти сьогодні?' }
+        ];
+        
+        // =========================================================================
+        // --- CORE AUXILIARY FUNCTIONS (MOVED TO TOP FOR DEFINITION) ---
+        // =========================================================================
+
+        function formatCurrency(amount) {
+             return parseFloat(amount).toLocaleString('uk-UA', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+            });
+        }
+        
+        function getAnnualRate(term) {
+            if (term <= 6) return 0.10; // 10%
+            if (term <= 12) return 0.11; // 11%
+            return 0.12; // 12%
+        }
+
+        function calculateDeposit() {
+            const amountInput = document.getElementById('deposit-amount');
+            const termInput = document.getElementById('deposit-term');
+            const interestSpan = document.getElementById('deposit-interest');
+            const totalSpan = document.getElementById('deposit-total');
+
+            const amount = parseFloat(amountInput?.value) || 0;
+            const term = parseInt(termInput?.value) || 0;
+
+            if (amount < 1000 || term === 0) {
+                 if (interestSpan) interestSpan.textContent = '0.00 грн';
+                 if (totalSpan) totalSpan.textContent = '0.00 грн';
+                 return;
+            }
+
+            const annualRate = getAnnualRate(term);
+            const interest = amount * annualRate * (term / 12); 
+            const total = amount + interest;
+
+            if (interestSpan) interestSpan.textContent = formatCurrency(interest.toFixed(2)) + ' грн';
+            if (totalSpan) totalSpan.textContent = formatCurrency(total.toFixed(2)) + ' грн';
+        }
+        
+        function showTransactionDetails(txId) {
+            const tx = transactions.find(t => t.id === txId);
+            if (!tx) return;
+
+            document.getElementById('detail-name').textContent = tx.name;
+            document.getElementById('detail-date').textContent = tx.date;
+            document.getElementById('detail-id').textContent = tx.transactionId;
+            
+            const isDebit = tx.amount < 0;
+            const sign = isDebit ? '' : '+';
+            const formattedAmount = `${sign}${Math.abs(tx.amount).toLocaleString('uk-UA', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+            })}`;
+
+            const amountEl = document.getElementById('detail-amount');
+            amountEl.textContent = `${formattedAmount} грн`;
+            amountEl.className = `font-bold text-lg ${isDebit ? 'text-red-600' : 'text-green-600'}`;
+
+            openModal('detail');
+        }
+
+        function openModal(modalId) {
+            const modalContainer = document.getElementById('modal-container');
+            const modalContent = document.getElementById(`${modalId}-modal`);
+            
+            if (modalId === 'cards') renderAllCards();
+            if (modalId === 'history') renderFullTransactions();
+            if (modalId === 'chat') renderChatHistory(); 
+            if (modalId === 'deposit') {
+                 // Оновлюємо ім'я картки у модальному вікні депозиту
+                const activeCard = cards[activeCardIndex];
+                const cardNameSpan = document.querySelector('#deposit-modal .text-blue-600');
+                if (cardNameSpan) cardNameSpan.textContent = activeCard ? activeCard.name : 'Н/Д';
+                calculateDeposit();
+            }
+
+            modalContainer.classList.remove('opacity-0', 'pointer-events-none');
+            modalContent.classList.remove('hidden', 'translate-y-full');
+            
+            // Ховаємо всі інші модальні вікна перед відкриттям нового (UX)
+            document.querySelectorAll('.modal-content-transition').forEach(el => {
+                if (el.id !== `${modalId}-modal`) {
+                     el.classList.add('hidden');
+                }
+            });
+        }
+
+        function closeModal() {
+            const modalContainer = document.getElementById('modal-container');
+            const openModals = document.querySelectorAll('.modal-content-transition:not(.hidden)');
+            
+            openModals.forEach(modal => {
+                modal.classList.add('translate-y-full');
+                setTimeout(() => modal.classList.add('hidden'), 300); 
+            });
+
+            modalContainer.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        function handleNotification(message, duration = 2000) {
+            const notifElement = document.getElementById('mock-notification');
+            
+            if (notificationTimeout) {
+                clearTimeout(notificationTimeout);
+                notifElement.style.opacity = '0';
+                notifElement.style.transform = 'translate(-50%, 10px)';
+            }
+
+            notifElement.textContent = `✅ ${message}`;
+            
+            setTimeout(() => {
+                notifElement.style.opacity = '1';
+                notifElement.style.transform = 'translate(-50%, 0)';
+            }, 50);
+
+            notificationTimeout = setTimeout(() => {
+                notifElement.style.opacity = '0';
+                notifElement.style.transform = 'translate(-50%, 10px)';
+            }, duration);
+        }
+        
+        function handleDepositSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const amountInput = parseFloat(form.elements['amount'].value);
+            const term = parseInt(form.elements['term'].value);
+            const errorElement = document.getElementById('deposit-error');
+
+            const activeCard = cards[activeCardIndex];
+
+            if (isNaN(amountInput) || amountInput < 1000) {
+                 handleNotification('Введіть коректну суму (мін. 1000 грн).');
+                 return;
+            }
+
+            if (amountInput > activeCard.balance) {
+                errorElement.classList.remove('hidden');
+                return;
+            }
+            errorElement.classList.add('hidden');
+
+            const annualRate = getAnnualRate(term);
+            const interest = amountInput * annualRate * (term / 12); 
+            const total = amountInput + interest;
+
+            addTransaction(-amountInput, `Відкриття депозиту (${term} міс.)`, '🛡️'); 
+            
+            handleNotification(`Депозит на ${formatCurrency(amountInput)} грн відкрито! Очікуваний дохід: ${formatCurrency(interest)} грн.`, 5000);
+            
+            // Мокова імітація завершення депозиту
+            setTimeout(() => {
+                const updatedCard = cards[activeCardIndex];
+                // Зараховуємо загальну суму після завершення (для мок-симуляції)
+                updatedCard.balance = parseFloat((updatedCard.balance + total).toFixed(2));
+                saveCardData();
+                updateCardDisplay();
+                
+                transactions.unshift({ 
+                    id: transactionIdCounter++, 
+                    name: `Завершення депозиту (+${term} міс.)`, 
+                    amount: total, 
+                    date: 'Депозит завершено', 
+                    icon: '✅', 
+                    transactionId: `DEP${Date.now()}`, 
+                    cardName: updatedCard.name 
+                });
+                renderTransactions();
+                handleNotification(`Депозит завершено! Зараховано ${formatCurrency(total)} грн.`, 6000);
+            }, 60000); // Спрацює через 60 секунд (1 хвилину) для демонстрації
+
+            closeModal();
+        }
+
+        // =========================================================================
+        // --- INITIALIZATION AND DOM READY ---
+        // =========================================================================
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAuthState();
+            loadCardData(); 
+            updateCardDisplay();
+            renderTransactions();
+            setupSwipeListener();
+            applyTheme();
+            renderHeaderButton();
+            startInterestTimer(); 
+        });
+
+
+        // --- PERSISTENCE & INTEREST LOGIC ---
+
+        function loadCardData() {
+            const storedCards = localStorage.getItem('skibidiCards');
+            if (storedCards) {
+                try { 
+                    const persistedCards = JSON.parse(storedCards);
+                    
+                    cards.forEach((card, index) => {
+                        const persistedCard = persistedCards.find(c => c.id === card.id);
+                        if (persistedCard) {
+                            // Оновлюємо динамічні поля
+                            cards[index] = { ...card, ...persistedCard };
+                        }
+                    });
+                    
+                    // Додаємо нові картки, які були створені
+                    persistedCards.filter(pc => !cards.some(c => c.id === pc.id)).forEach(pc => cards.push(pc));
+                } catch(e) {
+                    console.error("Error loading cards from local storage, resetting state.", e);
+                    // Якщо дані пошкоджені, скидаємо до початкового стану і зберігаємо.
+                    saveCardData(); 
+                }
+            }
+            // Перевіряємо, чи активний індекс все ще коректний
+            if (activeCardIndex >= cards.length || activeCardIndex < 0) {
+                activeCardIndex = 0;
+            }
+        }
+        
+        function saveCardData() {
+            localStorage.setItem('skibidiCards', JSON.stringify(cards));
+        }
+
+        function accrueInterest() {
+            const creditCard = cards.find(c => c.id === 3);
+            if (!creditCard || creditCard.debt <= 0) return;
+
+            const interestRate = 0.01; 
+            const interestAmount = creditCard.initialLoan * interestRate; 
+            
+            if (interestAmount > 0) {
+                 creditCard.debt = parseFloat((creditCard.debt + interestAmount).toFixed(2));
+                 saveCardData(); 
+
+                 transactions.unshift({ 
+                    id: transactionIdCounter++, 
+                    name: `Нарахування відсотків (+${(interestRate * 100).toFixed(0)}%)`, 
+                    amount: -interestAmount, 
+                    date: 'Нараховано', 
+                    icon: '⏰', 
+                    transactionId: `INT${Date.now()}`, 
+                    cardName: creditCard.name 
+                });
+                
+                if (activeCardIndex === cards.findIndex(c => c.id === 3)) {
+                     updateCardDisplay();
+                }
+                
+                console.log(`[INTEREST] Нараховано ${interestAmount.toFixed(2)} грн. Борг: ${creditCard.debt.toFixed(2)}`);
+            }
+        }
+
+        function startInterestTimer() {
+            if (interestIntervalId) clearInterval(interestIntervalId);
+            interestIntervalId = setInterval(accrueInterest, 60000); 
+        }
+
+        // --- AUTHENTICATION & PROFILE LOGIC (retained) ---
+        
+        function loadAuthState() {
+            const storedUser = localStorage.getItem('skibidiCurrentUser');
+            if (storedUser) {
+                currentUser = JSON.parse(storedUser);
+            }
+        }
+
+        function saveAuthState() {
+            if (currentUser) {
+                localStorage.setItem('skibidiCurrentUser', JSON.stringify(currentUser));
+            } else {
+                localStorage.removeItem('skibidiCurrentUser');
+            }
+            localStorage.setItem('skibidiUsers', JSON.stringify(mockUsers));
+        }
+
+        function renderHeaderButton() {
+            const btn = document.getElementById('profile-button');
+            if (currentUser) {
+                btn.innerHTML = `<svg class="icon" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+            } else {
+                btn.innerHTML = `<svg class="icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;
+            }
+        }
+        
+        function handleProfileClick() {
+            if (currentUser) {
+                openSettingsModal();
+            } else {
+                openModal('auth');
+                document.getElementById('auth-title').textContent = 'Вхід в акаунт';
+                document.getElementById('login-form').classList.remove('hidden');
+                document.getElementById('signup-form').classList.add('hidden');
+                document.getElementById('auth-switch-btn').innerHTML = 'Не маєте акаунту? **Зареєструватися**';
+            }
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            saveAuthState();
+            renderHeaderButton();
+            handleNotification('Ви успішно вийшли з акаунту.', 2500);
+            closeModal();
+        }
+        
+        function openSettingsModal() {
+             if (!currentUser) return; 
+
+             document.getElementById('current-user-nick').textContent = currentUser.nick;
+             document.getElementById('settings-nick').value = currentUser.nick;
+             
+             const themeBtn = document.getElementById('theme-toggle');
+             themeBtn.textContent = isDarkTheme ? 'Вимкнути' : 'Увімкнути';
+             themeBtn.classList.toggle('bg-gray-300', !isDarkTheme);
+             themeBtn.classList.toggle('bg-blue-600', isDarkTheme);
+             themeBtn.classList.toggle('text-white', isDarkTheme);
+
+
+             openModal('settings');
+        }
+
+        function handleSettingsChange(event) {
+             event.preventDefault();
+             const form = event.target;
+             const newNick = form.elements['nick'].value.trim();
+
+             if (newNick === currentUser.nick) {
+                 handleNotification('Нікнейм не змінено.', 1500);
+                 return;
+             }
+             
+             const userIndex = mockUsers.findIndex(u => u.nick === currentUser.nick);
+             if (userIndex !== -1) {
+                 mockUsers[userIndex].nick = newNick;
+             }
+             
+             currentUser.nick = newNick;
+             
+             saveAuthState();
+             document.getElementById('current-user-nick').textContent = newNick;
+             handleNotification(`Нікнейм успішно змінено на ${newNick}!`, 2500);
+        }
+
+        function applyTheme() {
+            document.body.classList.toggle('dark', isDarkTheme);
+        }
+
+        function toggleTheme() {
+            isDarkTheme = !isDarkTheme;
+            localStorage.setItem('skibidiTheme', isDarkTheme ? 'dark' : 'light');
+            applyTheme();
+            openSettingsModal(); 
+            const message = isDarkTheme ? 'Увімкнено темну тему!' : 'Увімкнено світлу тему!';
+            handleNotification(message, 2000);
+        }
+
+
+        // --- CORE BANKING & CARD LOGIC (retained) ---
+
+
+        function updateCardDisplay() {
+            const activeCard = cards[activeCardIndex];
+            const cardElement = document.getElementById('active-card');
+            
+            // Видалено кнопки стрілок, тому їх оновлення тут не потрібне
+
+            if (!activeCard) {
+                 cardElement.innerHTML = `<p class="text-white text-sm">Картки відсутні.</p>`;
+                 return;
+            }
+            
+            cardElement.className = `skibidi-card text-white p-5 rounded-xl cursor-grab active:cursor-grabbing ${activeCard.color}`;
+            
+            let balanceHtml;
+
+            if (activeCard.id === 3) { // Логіка для Кредитної картки
+                const availableCredit = activeCard.creditLimit - activeCard.debt;
+                const availableFunds = activeCard.balance; 
+                const totalAvailable = availableFunds + Math.max(0, availableCredit); 
+                const debt = activeCard.debt;
+
+                balanceHtml = `
+                    <div class="space-y-1">
+                        <p class="text-sm opacity-75">Доступний баланс</p>
+                        <div class="flex items-center space-x-2">
+                            <span id="balance-display" class="text-3xl font-bold tracking-tight">${isBalanceVisible ? formatCurrency(totalAvailable) : '••••••'}</span>
+                            <span class="text-xl font-semibold opacity-80">грн</span>
+                        </div>
+                        <p class="text-xs opacity-75 ${debt > 0 ? 'text-yellow-300' : ''}">
+                            ${debt > 0 ? 'Борг: ' + formatCurrency(debt) + ' грн' : 'Боргу немає!'}
+                        </p>
+                    </div>
+                    <!-- Додаткова інформація про кошти -->
+                    <div class="text-xs opacity-80 mt-2">
+                        <p>Власні кошти: ${formatCurrency(availableFunds)} грн</p>
+                        <p>Кредитний ліміт: ${formatCurrency(activeCard.creditLimit)} грн</p>
+                    </div>
+                `;
+            } else { // Логіка для звичайної картки
+                balanceHtml = `
+                    <p class="text-sm opacity-75 mb-1">${activeCard.name}</p>
+                    <div class="flex items-center space-x-2">
+                        <span id="balance-display" class="text-3xl font-bold tracking-tight">${isBalanceVisible ? formatCurrency(activeCard.balance) : '••••••'}</span>
+                        <span class="text-xl font-semibold opacity-80">грн</span>
+                    </div>
+                `;
+            }
+            
+            // Вставляємо контент картки
+            cardElement.innerHTML = `
+                <div class="flex flex-col h-full justify-between">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-grow">
+                            ${balanceHtml}
+                        </div>
+                        <div class="bg-yellow-400 text-gray-900 font-extrabold px-2 py-1 text-sm rounded-lg rotate-12 mt-1">
+                            ${activeCard.icon}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <p class="text-xs opacity-60 mt-2">**** ${activeCard.number} (MC)</p>
+
+                        <button onclick="openCardSettings(${activeCard.id})" class="w-full mt-2 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-1.5 text-sm rounded-lg transition action-button">
+                            Налаштування
+                        </button>
+                    </div>
+                </div>
+                <button id="toggle-balance-btn" onclick="toggleBalanceVisibility()" class="absolute top-6 right-6 text-white opacity-70 hover:opacity-100 transition p-1">
+                    <!-- Eye Icon -->
+                    <svg id="eye-open" class="icon ${isBalanceVisible ? '' : 'hidden'}" viewBox="0 0 24 24" stroke="currentColor"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    <!-- Eye Off Icon -->
+                    <svg id="eye-closed" class="icon ${isBalanceVisible ? 'hidden' : ''}" viewBox="0 0 24 24" stroke="currentColor"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-7-10-7a1.8 1.8 0 0 1 .45-.48m5-10.5C19.92 5.06 22 12 22 12c-3 7-10 7-10 7"></path><path d="M4.22 4.22L2 2m18 20l-2.22-2.22m-8.98-8.98l-3.34-3.34"></path><path d="M9.31 9.31L7.1 7.1"></path></svg>
+                </button>
+            `;
+            
+            renderTransactions();
+            calculateDeposit(); 
+        }
+
+        function toggleBalanceVisibility() {
+            isBalanceVisible = !isBalanceVisible;
+            updateCardDisplay();
+            const message = isBalanceVisible ? 'Баланс видно' : 'Баланс приховано';
+            handleNotification(message, 1500);
+        }
+
+        function nextCard() {
+            if (activeCardIndex < cards.length - 1) {
+                activeCardIndex++;
+                updateCardDisplay();
+                handleNotification(`Активна картка: ${cards[activeCardIndex].name}`, 1000);
+            }
+        }
+
+        function prevCard() {
+            if (activeCardIndex > 0) {
+                activeCardIndex--;
+                updateCardDisplay();
+                handleNotification(`Активна картка: ${cards[activeCardIndex].name}`, 1000);
+            }
+        }
+
+        // --- CARD MANAGEMENT LOGIC (retained) ---
+
+        function openCardSettings(cardId) {
+            const card = cards.find(c => c.id === cardId);
+            if (!card) return;
+
+            document.getElementById('settings-card-id').value = card.id;
+            document.getElementById('settings-name').value = card.name;
+            document.getElementById('settings-card-name').textContent = `Налаштування картки: ${card.name}`;
+
+            document.getElementById('settings-color').value = card.color;
+            document.querySelectorAll('#color-options button').forEach(btn => {
+                btn.classList.remove('border-white', 'border-gray-400');
+                if (btn.getAttribute('data-color') === card.color) {
+                    btn.classList.add('border-white');
+                } else {
+                    btn.classList.add('border-gray-400');
+                }
+            });
+            
+            // Логіка для кнопки "Видалити"
+            const deleteBtn = document.getElementById('delete-card-button');
+            const deleteInfo = document.getElementById('card-delete-info');
+
+            if (card.id === 3 && card.debt > 0) {
+                deleteBtn.disabled = true;
+                deleteInfo.classList.remove('hidden');
+                document.getElementById('card-delete-debt').textContent = formatCurrency(card.debt);
+            } else if (cards.length === 1) {
+                deleteBtn.disabled = true;
+                deleteInfo.classList.remove('hidden');
+                deleteInfo.textContent = 'Неможливо видалити єдину картку.';
+            } else {
+                deleteBtn.disabled = false;
+                deleteInfo.classList.add('hidden');
+            }
+
+            openModal('cardsettings');
+        }
+
+        function handleCardDelete() {
+            const cardId = parseInt(document.getElementById('settings-card-id').value);
+            const cardIndex = cards.findIndex(c => c.id === cardId);
+            if (cardIndex === -1) return;
+
+            const cardToDelete = cards[cardIndex];
+
+            // Захист
+            if (cardToDelete.id === 3 && cardToDelete.debt > 0) {
+                handleNotification('Неможливо видалити картку з активним кредитом!', 3000);
+                return;
+            }
+            if (cards.length === 1) {
+                handleNotification('Неможливо видалити єдину картку!', 3000);
+                return;
+            }
+
+            // Видалення картки
+            cards.splice(cardIndex, 1);
+            saveCardData();
+
+            // Коригування активного індексу
+            if (activeCardIndex >= cards.length) {
+                activeCardIndex = cards.length - 1;
+            } else if (activeCardIndex === cardIndex) {
+                 activeCardIndex = 0;
+            }
+
+            updateCardDisplay();
+            handleNotification(`Картку "${cardToDelete.name}" видалено.`, 2500);
+            closeModal();
+        }
+
+        function handleCardSettingsSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const cardId = parseInt(form.elements['id'].value);
+            const newName = form.elements['name'].value.trim();
+            const newColor = form.elements['color'].value;
+
+            const cardIndex = cards.findIndex(c => c.id === cardId);
+            if (cardIndex === -1) return;
+
+            cards[cardIndex].name = newName;
+            cards[cardIndex].color = newColor;
+
+            if (cardIndex === activeCardIndex) {
+                updateCardDisplay();
+            }
+            
+            saveCardData();
+            handleNotification(`Налаштування картки "${newName}" збережено!`, 2500);
+            closeModal();
+        }
+
+        function handleNewCardSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const newName = form.elements['name'].value.trim();
+            const newColor = form.elements['color'].value;
+
+            const newCard = {
+                id: newCardIdCounter++,
+                name: newName,
+                balance: 0.00,
+                number: Math.floor(1000 + Math.random() * 9000).toString(),
+                color: newColor,
+                icon: '✨',
+            };
+            
+            cards.push(newCard);
+            activeCardIndex = cards.length - 1; 
+            
+            saveCardData();
+            handleNotification(`Нова карта "${newName}" створена!`, 3000);
+            updateCardDisplay();
+            closeModal();
+        }
+
+
+        // --- SWIPE LOGIC (FIXED) ---
+        let startX = 0;
+        let startY = 0;
+        let isScrolling = undefined;
+
+        function setupSwipeListener() {
+            const cardPlaceholder = document.getElementById('card-placeholder');
+            // FIX: passive: false дозволяє викликати event.preventDefault() для блокування скролу
+            cardPlaceholder.addEventListener('touchstart', handleTouchStart, { passive: false });
+            cardPlaceholder.addEventListener('touchmove', handleTouchMove, { passive: false }); 
+            cardPlaceholder.addEventListener('touchend', handleTouchEnd);
+        }
+
+        function handleTouchStart(event) {
+            startX = event.touches[0].clientX;
+            startY = event.touches[0].clientY;
+            isScrolling = undefined;
+        }
+
+        function handleTouchMove(event) {
+            if (startX === 0) return; 
+
+            const diffX = event.touches[0].clientX - startX;
+            const diffY = event.touches[0].clientY - startY;
+
+            if (typeof isScrolling === 'undefined') {
+                isScrolling = Math.abs(diffX) < Math.abs(diffY);
+            }
+
+            if (isScrolling === false) {
+                // Блокуємо вертикальний скрол, якщо рух горизонтальний
+                event.preventDefault(); 
+            }
+        }
+        
+        function handleTouchEnd(event) {
+            if (!startX) return;
+            const endX = event.changedTouches[0].clientX;
+            const diff = startX - endX;
+            const swipeThreshold = 50; 
+
+            if (Math.abs(diff) > swipeThreshold && isScrolling === false) {
+                if (diff > 0) {
+                    nextCard();
+                } else {
+                    prevCard();
+                }
+            }
+            startX = 0; 
+            startY = 0;
+            isScrolling = undefined;
+        }
+
+
+        // --- TRANSACTION HANDLERS (Credit Logic Fixed) ---
+        
+        function checkBalance(amount, errorId) {
+            const activeCard = cards[activeCardIndex];
+            const errorElement = document.getElementById(errorId);
+            
+            if (activeCard.id !== 3 && amount > activeCard.balance) {
+                errorElement.classList.remove('hidden');
+                return false;
+            }
+            
+            if (activeCard.id === 3) {
+                const availableCredit = activeCard.creditLimit - activeCard.debt;
+                const totalAvailable = activeCard.balance + Math.max(0, availableCredit);
+                 if (amount > totalAvailable) {
+                    errorElement.classList.remove('hidden');
+                    return false;
+                 }
+            }
+
+            errorElement.classList.add('hidden');
+            return true;
+        }
+
+        function handleReplenishSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const amountInput = parseFloat(form.elements['amount'].value);
+            const source = form.elements['source'].value;
+            const sender = form.elements['sender'].value.trim() || source;
+
+            if (isNaN(amountInput) || amountInput <= 0) {
+                 handleNotification('Введіть коректну суму.');
+                 return;
+            }
+
+            const activeCard = cards[activeCardIndex];
+            if (activeCard.id === 3 && activeCard.debt > 0) {
+                const debtToPay = activeCard.debt;
+                
+                if (amountInput >= debtToPay) {
+                    activeCard.debt = 0.00;
+                    activeCard.initialLoan = 0.00; // <--- FIX: Скидаємо початкову суму кредиту
+                    
+                    const remainingAmount = amountInput - debtToPay;
+                    addTransaction(remainingAmount, `Поповнення від ${sender} (Залишок)`, '⬆️'); 
+                    handleNotification(`Борг (${formatCurrency(debtToPay)} грн) погашено. Залишок ${formatCurrency(remainingAmount)} грн зараховано.`, 4500);
+                } else {
+                    activeCard.debt = parseFloat((debtToPay - amountInput).toFixed(2));
+                    handleNotification(`Частина боргу погашена (${formatCurrency(amountInput)} грн). Залишок боргу: ${formatCurrency(activeCard.debt)} грн.`, 4500);
+                }
+                saveCardData();
+                updateCardDisplay();
+            } else {
+                addTransaction(amountInput, `Поповнення від ${sender}`, '⬆️'); 
+                handleNotification(`Баланс поповнено на ${amountInput.toFixed(2)} грн!`, 3000);
+            }
+            closeModal();
+        }
+
+        function addTransaction(amount, name, icon, cardId = null) {
+            const activeCard = cardId ? cards.find(c => c.id === cardId) : cards[activeCardIndex];
+            if (!activeCard) return;
+
+            activeCard.balance = parseFloat((activeCard.balance + amount).toFixed(2));
+            
+            if (activeCard.id === 3 && amount < 0) {
+                if (activeCard.debt > 0) {
+                     activeCard.debt = parseFloat((activeCard.debt - amount).toFixed(2));
+                } else if (activeCard.balance < 0) {
+                    activeCard.debt = parseFloat((activeCard.debt - activeCard.balance).toFixed(2)); 
+                }
+            }
+
+
+            const newTransaction = {
+                id: transactionIdCounter,
+                name: name,
+                amount: amount,
+                date: 'Зараз',
+                icon: icon,
+                transactionId: `TX${10000000 + transactionIdCounter}`,
+                cardName: activeCard.name, 
+            };
+            transactionIdCounter++;
+
+            transactions.unshift(newTransaction);
+            
+            saveCardData();
+            updateCardDisplay();
+            renderTransactions();
+        }
+
+        // --- Other auxiliary functions (retained) ---
+
+        function handleTransferSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const amountInput = parseFloat(form.elements['amount'].value);
+            const recipient = form.elements['recipient'].value.trim();
+
+            if (!checkBalance(amountInput, 'transfer-error')) return;
+            
+            addTransaction(-amountInput, recipient, '💸'); 
+            handleNotification(`Успішно переказано ${amountInput.toFixed(2)} грн до ${recipient}`, 3000);
+            closeModal();
+        }
+
+        function handlePaymentSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const amountInput = parseFloat(form.elements['amount'].value);
+            const service = form.elements['service'].value;
+
+            if (!checkBalance(amountInput, 'payment-error')) return;
+
+            addTransaction(-amountInput, service, '💳'); 
+            handleNotification(`Успішно оплачено ${amountInput.toFixed(2)} грн за послугу "${service}"`, 3000);
+            closeModal();
+        }
+        
+        function handleCreditSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const amount = parseFloat(form.elements['amount'].value);
+            const term = form.elements['term'].value;
+
+            const creditCard = cards.find(c => c.id === 3);
+
+            if (amount > creditCard.creditLimit) {
+                 handleNotification('Заявлена сума перевищує кредитний ліміт!', 3000);
+                 return;
+            }
+
+            creditCard.balance = parseFloat((creditCard.balance + amount).toFixed(2));
+            creditCard.debt = parseFloat((creditCard.debt + amount).toFixed(2));
+            creditCard.initialLoan = amount; 
+
+            addTransaction(amount, `Отримання Кредиту (термін ${term} міс.)`, '💰', 3); 
+            
+            saveCardData();
+
+            handleNotification(`Кредит ${formatCurrency(amount)} грн видано на карту "${creditCard.name}"!`, 4000);
+            closeModal();
+            updateCardDisplay(); 
+            startInterestTimer(); 
+        }
+
+        function renderAllCards() {
+            const list = document.getElementById('all-cards-list');
+            list.innerHTML = '';
+            
+            cards.forEach((card, index) => {
+                const cardHtml = `
+                    <div class="flex justify-between items-center p-4 rounded-xl shadow-md ${card.color} text-white">
+                        <div class="flex-grow">
+                            <p class="text-lg font-bold">${card.name}</p>
+                            ${card.id === 3 && card.debt > 0 ? `<p class="text-xs text-yellow-300">Борг: ${formatCurrency(card.debt)} грн</p>` : `<p class="text-sm opacity-80">**** ${card.number}</p>`}
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xl font-extrabold">${formatCurrency(card.balance)} грн</p>
+                            <button onclick="openCardSettings(${card.id})" class="text-xs mt-1 underline opacity-70 hover:opacity-100 transition">
+                                Налаштувати
+                            </button>
+                        </div>
+                    </div>
+                `;
+                list.innerHTML += cardHtml;
+            });
+        }
+        
+        function renderTransactions() {
+            const list = document.getElementById('transactions-list');
+            list.innerHTML = ''; 
+            
+            const transactionsToShow = transactions.slice(0, 5);
+
+            transactionsToShow.forEach(tx => {
+                const isDebit = tx.amount < 0;
+                const sign = isDebit ? '' : '+';
+                
+                const formattedAmount = `${sign}${Math.abs(tx.amount).toLocaleString('uk-UA', { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                })}`;
+                
+                const cardInfo = tx.cardName ? ` | ${tx.cardName}` : '';
+
+                const transactionHtml = `
+                    <div onclick="showTransactionDetails(${tx.id})" 
+                         class="flex justify-between items-center p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition">
+                        
+                        <!-- Icon and Name -->
+                        <div class="flex items-center space-x-3">
+                            <div class="text-xl">${tx.icon}</div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-800">${tx.name}</p>
+                                <p class="text-xs text-gray-500">${tx.date} ${cardInfo}</p>
+                            </div>
+                        </div>
+
+                        <!-- Amount -->
+                        <div class="text-right">
+                            <p class="text-sm font-bold ${isDebit ? 'text-red-600' : 'text-green-600'}">
+                                ${formattedAmount} грн
+                            </p>
+                            <p class="text-xs text-gray-400">Картка</p>
+                        </div>
+                    </div>
+                `;
+                list.innerHTML += transactionHtml;
+            });
+
+            if (transactions.length > 5 && list.children.length === 5) {
+                list.innerHTML += `
+                    <div class="pt-2 text-center">
+                        <button onclick="openHistoryPage()" class="text-sm text-blue-600 font-semibold hover:underline">
+                            Показати всі ${transactions.length} транзакцій
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function renderFullTransactions() {
+            const list = document.getElementById('full-transactions-list');
+            if (!list) return;
+
+            list.innerHTML = ''; 
+            
+            transactions.forEach(tx => {
+                const isDebit = tx.amount < 0;
+                const sign = isDebit ? '' : '+';
+                
+                const formattedAmount = `${sign}${Math.abs(tx.amount).toLocaleString('uk-UA', { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                })}`;
+                
+                const cardInfo = tx.cardName ? ` | ${tx.cardName}` : '';
+
+                const transactionHtml = `
+                    <div onclick="showTransactionDetails(${tx.id})" 
+                         class="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm cursor-pointer hover:bg-gray-100 transition">
+                        
+                        <!-- Icon and Name -->
+                        <div class="flex items-center space-x-3">
+                            <div class="text-xl">${tx.icon}</div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-800">${tx.name}</p>
+                                <p class="text-xs text-gray-500">${tx.date} ${cardInfo}</p>
+                            </div>
+                        </div>
+
+                        <!-- Amount -->
+                        <div class="text-right">
+                            <p class="text-base font-bold ${isDebit ? 'text-red-600' : 'text-green-600'}">
+                                ${formattedAmount} грн
+                            </p>
+                            <p class="text-xs text-gray-400">${tx.transactionId}</p>
+                        </div>
+                    </div>
+                `;
+                list.innerHTML += transactionHtml;
+            });
+        }
+
+        function renderChatHistory() {
+            const list = document.getElementById('chat-history');
+            if (!list) return;
+            list.innerHTML = '';
+            
+            chatHistory.forEach(msg => {
+                const isManager = msg.sender === 'manager';
+                const alignment = isManager ? 'justify-start' : 'justify-end';
+                const bubbleClass = isManager ? 'manager-message' : 'user-message';
+
+                const html = `
+                    <div class="flex ${alignment}">
+                        <div class="message-bubble ${bubbleClass} shadow-md">
+                            ${msg.text}
+                            <div class="text-right text-xs mt-1 opacity-70">${isManager ? 'Менеджер' : 'Ви'}</div>
+                        </div>
+                    </div>
+                `;
+                list.innerHTML += html;
+            });
+            scrollToChatBottom();
+        }
+        
+        function scrollToChatBottom() {
+            const chatHistoryElement = document.getElementById('chat-history');
+            if (chatHistoryElement) {
+                chatHistoryElement.scrollTop = chatHistoryElement.scrollHeight;
+            }
+        }
+        
+        function generateManagerResponse(userMessage) {
+            const lowMsg = userMessage.toLowerCase();
+
+            if (lowMsg.includes('баланс') || lowMsg.includes('рахунок')) {
+                return 'Для перевірки балансу по конкретній картці, будь ласка, скористайтесь головним екраном додатку або нашою голосовою лінією.';
+            }
+            if (lowMsg.includes('переказ') || lowMsg.includes('платіж')) {
+                return 'Ви можете здійснити переказ, натиснувши кнопку "Переказ" на головній сторінці. Перекази займають до 5 хвилин.';
+            }
+            if (lowMsg.includes('кредит')) {
+                const creditCard = cards.find(c => c.id === 3);
+                if (creditCard && creditCard.debt > 0) {
+                     return `Ви маєте активний борг ${formatCurrency(creditCard.debt)} грн. Ви можете внести платіж через "Поповнення" на кредитній картці.`;
+                }
+                return 'Заявку на кредит можна подати через кнопку "Кредит" на головному екрані. Ми розглянемо її протягом 15 хвилин.';
+            }
+
+            return 'Дякую за ваше питання. Щоб надати точну відповідь, мені потрібно уточнити деталі. Зверніться, будь ласка, на гарячу лінію або до фахівця.';
+        }
+
+        // --- Event Handlers (retained) ---
+        
+        function handleChatSubmit(event) {
+            event.preventDefault();
+            const input = document.getElementById('chat-input');
+            const userMessage = input.value.trim();
+
+            if (!userMessage) return;
+
+            chatHistory.push({ sender: 'user', text: userMessage });
+            renderChatHistory();
+            
+            input.value = '';
+            
+            setTimeout(() => {
+                const managerResponse = generateManagerResponse(userMessage);
+                chatHistory.push({ sender: 'manager', text: managerResponse });
+                renderChatHistory();
+            }, 1000);
+        }
+        
+        function openCardsPage() {
+            openModal('cards');
+        }
+
+        function openHistoryPage() {
+            openModal('history');
+        }
+        
+        function openChatPage() {
+            openModal('chat');
+            setTimeout(scrollToChatBottom, 300);
+        }
+
+        function openCreditModal() {
+            updateCreditModalInfo();
+            openModal('credit');
+        }
+
+        function updateCreditModalInfo() {
+            const creditCard = cards.find(c => c.id === 3);
+            const infoDiv = document.getElementById('credit-info');
+            const debt = creditCard.debt;
+            const availableLimit = creditCard.creditLimit - debt;
+            const availableFunds = creditCard.balance;
+
+            let statusHtml;
+            let formState = '';
+
+            if (debt > 0) {
+                statusHtml = `
+                    <p class="font-bold text-lg text-red-600">Активний Кредит</p>
+                    <p>Поточна Заборгованість: <span class="font-bold">${formatCurrency(debt)} грн</span></p>
+                    <p>Доступний Ліміт: <span class="font-bold">${formatCurrency(Math.max(0, availableLimit))} грн</span></p>
+                    <p class="text-sm mt-1">Нарахування відсотків: 1% від початкової суми кожну хвилину.</p>
+                `;
+                formState = 'hidden';
+            } else {
+                 statusHtml = `
+                    <p class="font-bold text-lg text-green-600">Кредитний Ліміт</p>
+                    <p>Загальний Ліміт: <span class="font-bold">${formatCurrency(creditCard.creditLimit)} грн</span></p>
+                    <p>Ваша Заборгованість: <span class="font-bold">0.00 грн</span></p>
+                `;
+            }
+            
+            if (infoDiv) infoDiv.innerHTML = statusHtml;
+            const creditForm = document.getElementById('credit-form');
+            const submitBtn = document.getElementById('submit-credit-btn');
+            
+            if (creditForm) creditForm.classList.toggle('hidden', debt > 0);
+            if (submitBtn) submitBtn.disabled = debt > 0;
+            
+        }
+
+        function selectCardColor(button) {
+            const color = button.getAttribute('data-color');
+            const containerId = button.closest('#color-options') ? 'settings' : 'newcard';
+            
+            document.querySelectorAll(`#${containerId}-color-options button`).forEach(btn => {
+                btn.classList.remove('border-white', 'border-gray-400');
+                btn.classList.add('border-gray-400');
+            });
+            
+            button.classList.remove('border-gray-400');
+            button.classList.add('border-white');
+
+            document.getElementById(`${containerId}-color`).value = color;
+        }
+
+        function selectNewCardColor(button) {
+             selectCardColor(button);
+        }
+        
+        function toggleAuthMode() {
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const authTitle = document.getElementById('auth-title');
+            const switchBtn = document.getElementById('auth-switch-btn');
+
+            if (loginForm.classList.contains('hidden')) {
+                // Перехід до Входу
+                loginForm.classList.remove('hidden');
+                signupForm.classList.add('hidden');
+                authTitle.textContent = 'Вхід в акаунт';
+                switchBtn.innerHTML = 'Не маєте акаунту? **Зареєструватися**';
+            } else {
+                // Перехід до Реєстрації
+                loginForm.classList.add('hidden');
+                signupForm.classList.remove('hidden');
+                authTitle.textContent = 'Створення акаунту';
+                switchBtn.innerHTML = 'Вже є акаунт? **Увійти**';
+            }
+        }
+        
+        function handleSignup(event) {
+            event.preventDefault();
+            const form = event.target;
+            const nick = form.elements['nick'].value.trim();
+            const password = form.elements['password'].value;
+            const errorElement = document.getElementById('signup-error');
+
+            if (mockUsers.some(u => u.nick === nick)) {
+                errorElement.classList.remove('hidden');
+                return;
+            }
+            errorElement.classList.add('hidden');
+
+            const newUser = { nick, password };
+            mockUsers.push(newUser);
+            currentUser = newUser;
+            saveAuthState();
+            
+            handleNotification(`Реєстрація успішна! Ласкаво просимо, ${nick}!`, 3000);
+            closeModal();
+            renderHeaderButton();
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const form = event.target;
+            const nick = form.elements['nick'].value.trim();
+            const password = form.elements['password'].value;
+            const errorElement = document.getElementById('login-error');
+
+            const user = mockUsers.find(u => u.nick === nick && u.password === password);
+
+            if (!user) {
+                errorElement.classList.remove('hidden');
+                return;
+            }
+            errorElement.classList.add('hidden');
+
+            currentUser = user;
+            saveAuthState();
+            
+            handleNotification(`Вхід успішний! Вітаємо, ${nick}!`, 3000);
+            closeModal();
+            renderHeaderButton();
+        }
+
+    </script>
+
+</body>
+</html>
